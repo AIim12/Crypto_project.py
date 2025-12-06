@@ -1,0 +1,6 @@
+requests
+pymongo
+mongoengine
+python-dotenv
+pytest
+pylint
