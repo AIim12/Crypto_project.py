@@ -8,47 +8,49 @@ from mongoengine import connect, disconnect
 
 class MongoDBConnection:
     """
-    Handles MongoDB connection lifecycle.
-    Uses environment variables when available.
+    Handles the MongoDB connection lifecycle using a URI for flexibility.
     """
 
-    def __init__(
-        self,
-        db_name: str,
-        host: str = "localhost",
-        port: int = 27017,
-    ) -> None:
+    def __init__(self, uri: str, db_name: str) -> None:
+        self.uri = uri
         self.db_name = db_name
-        self.host = host
-        self.port = port
         self._connected: bool = False
 
     def connect(self) -> None:
+        """Establishes the database connection if not already connected."""
         if self._connected:
             return
-
-        connect(
-            db=self.db_name,
-            host=self.host,
-            port=self.port,
-        )
+        # mongoengine's connect function can take a host URI
+        connect(db=self.db_name, host=self.uri)
         self._connected = True
+        print("🔌 Database connection established.")
 
     def disconnect(self) -> None:
+        """Closes the database connection if it is open."""
         if self._connected:
             disconnect()
             self._connected = False
+            print("🔌 Database connection closed.")
 
 
 def get_default_connection() -> MongoDBConnection:
     """
-    Returns a default MongoDB connection using environment variables if provided.
+    Initializes a MongoDB connection using environment variables.
+    
+    Prioritizes MONGO_URI for full connection string, but falls back to
+    individual MONGO_HOST, MONGO_PORT, and MONGO_DB_NAME for local dev.
     """
-
     db_name = os.getenv("MONGO_DB_NAME", "crypto_monitor")
+    
+    # Prioritize full URI for production-like environments (e.g., MongoDB Atlas)
+    if mongo_uri := os.getenv("MONGO_URI"):
+        return MongoDBConnection(uri=mongo_uri, db_name=db_name)
+
+    # Fallback for local development
     host = os.getenv("MONGO_HOST", "localhost")
     port_str: Optional[str] = os.getenv("MONGO_PORT")
-
-    port = int(port_str) if port_str else 27017
-
-    return MongoDBConnection(db_name=db_name, host=host, port=port)
+    port = int(port_str) if port_str and port_str.isdigit() else 27017
+    
+    local_uri = f"mongodb://{host}:{port}/"
+    
+    return MongoDBConnection(uri=local_uri, db_name=db_name)

@@ -26,7 +26,6 @@ class TrackedCoin:
     coin_id: str           # e.g. "bitcoin"
     symbol: str            # e.g. "btc"
     name: str              # e.g. "Bitcoin"
-    is_active: bool = True
 
 
 @dataclass(frozen=True)
@@ -52,19 +51,18 @@ class TrackedCoinDocument(Document):
     meta = {
         "collection": "tracked_coins",
         "indexes": ["coin_id", "symbol"],
+        "strict": False,  # Allow documents with extra fields (like old 'is_active')
     }
 
     coin_id = StringField(required=True, unique=True)
     symbol = StringField(required=True)
     name = StringField(required=True)
-    is_active = BooleanField(default=True)
 
     def to_dataclass(self) -> TrackedCoin:
         return TrackedCoin(
             coin_id=self.coin_id,
             symbol=self.symbol,
             name=self.name,
-            is_active=self.is_active,
         )
 
 
@@ -75,6 +73,7 @@ class CoinPriceDocument(Document):
     meta = {
         "collection": "coin_prices",
         "indexes": ["coin_id", "timestamp"],
+        "strict": False,
     }
 
     coin_id = StringField(required=True)

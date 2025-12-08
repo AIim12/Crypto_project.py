@@ -1,6 +1,10 @@
 requests
-pymongo
 mongoengine
-python-dotenv
-pytest
 pylint
+python-dotenv
+
+# Testing
+pytest
+pytest-mock
+pytest-mongo
+requests-mock
