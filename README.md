@@ -1,6 +1,3 @@
-Here is the finalized, clean, and GitHub-ready `README.md`. I have fixed the formatting artifacts, cleaned up the "weird signs" (fixing the ASCII art and removing unnecessary escape characters), and formatted the Resources section properly.
-
-
 ## Crypto Analytics System CLI
 
 ## 1. Project Overview
