@@ -16,9 +16,9 @@ from typing import List, Optional
 
 from mongoengine import ValidationError
 
-from api.crypto_client import BaseCryptoClient
-from database.mongo import MongoDBConnection, get_default_connection
-from models.coin import (
+from ..api.crypto_client import BaseCryptoClient
+from ..database.mongo import MongoDBConnection, get_default_connection
+from ..models.coin import (
     CoinPrice,
     CoinPriceDocument,
     TrackedCoin,
@@ -169,16 +169,19 @@ class CryptoTracker:
     # New Analytics Methods
     # =========================
 
-    def get_market_analytics(self, coin_id: str, limit: int) -> MarketAnalytics:
+    def get_market_analytics(self, coin_id: str, limit: int) -> Optional[MarketAnalytics]:
         """Calculates market analytics over the last N records."""
         history = self.get_price_history(coin_id, limit)
         actual_count = len(history)
 
         if actual_count < 2:
-            raise ValueError(
-                "Not enough data for market analysis. "
-                f"Need at least 2 records, but found {actual_count}."
+            logging.warning(
+                "Not enough data for market analysis for '%s'. "
+                "Need at least 2 records, but found %s.",
+                coin_id,
+                actual_count,
             )
+            return None
 
         prices = [item.price for item in history]
         # History is newest first, so reverse for open/close
@@ -246,14 +249,17 @@ class CryptoTracker:
         momentum = (abs(net_change_percent) * 0.5) + (abs(norm_slope) * 20)
         return min(max(momentum, 0), 10)
 
-    def get_trend_analysis(self, coin_id: str, limit: int) -> TrendAnalysis:
+    def get_trend_analysis(self, coin_id: str, limit: int) -> Optional[TrendAnalysis]:
         """Performs trend, volatility, and momentum analysis."""
         history = self.get_price_history(coin_id, limit)
         if len(history) < 4:
-            raise ValueError(
-                "Not enough data for trend analysis. "
-                f"Need at least 4 records, but found {len(history)}."
+            logging.warning(
+                "Not enough data for trend analysis for '%s'. "
+                "Need at least 4 records, but found %s.",
+                coin_id,
+                len(history),
             )
+            return None
 
         prices = [item.price for item in history]
 
@@ -345,7 +351,7 @@ class CryptoTracker:
                         break
                     logging.error("❌ Invalid number. Please choose from the list.")
                 except ValueError:
-                    logging.error("❌ Invalid input. Please enter a number.")
+                    logging.error("❌ Invalid input. Please enter a number. ")
 
             if choice == 0:
                 raise ValueError("Operation cancelled by user.")

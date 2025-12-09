@@ -10,8 +10,8 @@ import logging
 
 from mongoengine.errors import DoesNotExist
 
-from api.crypto_client import CoinGeckoClient
-from services.tracker import CryptoTracker
+from .api.crypto_client import CoinGeckoClient
+from .services.tracker import CryptoTracker
 
 # Configure logging
 logging.basicConfig(
@@ -63,6 +63,10 @@ def handle_market_analytics(tracker: CryptoTracker):
 
     analytics = tracker.get_market_analytics(coin_id, limit)
 
+    # If analytics could not be computed, exit early.
+    if analytics is None:
+        return
+
     if analytics.record_count < limit:
         logging.warning(
             "⚠️ Only %s records were available. Analytics computed on this subset.",
@@ -92,6 +96,10 @@ def handle_trend_analysis(tracker: CryptoTracker):
         logging.error("❌ Invalid number. Please enter an integer greater than 3.")
 
     analysis = tracker.get_trend_analysis(coin_id, limit)
+
+    # If analysis could not be computed, exit early.
+    if analysis is None:
+        return
 
     if analysis.record_count < limit:
         logging.warning(
